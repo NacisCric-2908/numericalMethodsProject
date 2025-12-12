@@ -13,42 +13,36 @@ import sympy as sp
 
 @dataclass
 class IterationRecord:
-    index: int
-    values: List[float]
-    delta_norm: float
-    residual_norm: float
+    """Almacena datos de cada iteración del método."""
+    index: int  # Número de iteración
+    values: List[float]  # Valores actuales de las variables
+    delta_norm: float  # Norma infinito del cambio ||Δx||∞
+    residual_norm: float  # Norma infinito del residuo ||F(x)||∞
 
 
 class NewtonSystemSolver:
     """Resuelve sistemas no lineales usando Newton-Raphson."""
 
     def __init__(self) -> None:
+        # Inicializa diccionario de funciones permitidas para seguridad
         self._safe_locals = self._build_safe_locals()
 
     @staticmethod
     def _build_safe_locals() -> Dict[str, object]:
+        """Construye diccionario seguro de funciones matemáticas permitidas."""
+        # Lista de funciones permitidas de SymPy
         allowed = [
-            "sin",
-            "cos",
-            "tan",
-            "asin",
-            "acos",
-            "atan",
-            "sinh",
-            "cosh",
-            "tanh",
-            "exp",
-            "log",
-            "sqrt",
-            "pi",
-            "E",
+            "sin", "cos", "tan", "asin", "acos", "atan",
+            "sinh", "cosh", "tanh", "exp", "log", "sqrt", "pi", "E",
         ]
+        # Mapea nombres a funciones reales de SymPy
         safe = {name: getattr(sp, name) for name in allowed if hasattr(sp, name)}
-        safe.update({"pi": sp.pi, "e": sp.E})
+        safe.update({"pi": sp.pi, "e": sp.E})  # Aliases de constantes
         return safe
 
     @staticmethod
     def _parse_variables(raw: str) -> List[str]:
+        """Extrae y valida lista de variables desde string separado por comas."""
         variables = [token.strip() for token in raw.split(",") if token.strip()]
         if not variables:
             raise ValueError("Debe ingresar al menos una variable, separada por comas.")
@@ -58,6 +52,7 @@ class NewtonSystemSolver:
 
     @staticmethod
     def _parse_initial_guess(raw: str, expected: int) -> np.ndarray:
+        """Convierte y valida vector inicial desde string."""
         try:
             values = [float(token.strip()) for token in raw.split(",") if token.strip()]
         except ValueError as exc:
@@ -69,6 +64,7 @@ class NewtonSystemSolver:
         return np.array(values, dtype=float)
 
     def _parse_functions(self, raw: str, variables: Sequence[str]) -> Tuple[List[sp.Expr], sp.MutableDenseMatrix]:
+        """Convierte ecuaciones en string a expresiones y calcula Jacobiano automáticamente."""
         lines = [line.strip() for line in raw.splitlines() if line.strip()]
         if not lines:
             raise ValueError("Debe ingresar al menos una ecuación.")
@@ -76,14 +72,17 @@ class NewtonSystemSolver:
             raise ValueError(
                 f"El número de ecuaciones ({len(lines)}) debe coincidir con el número de variables ({len(variables)})."
             )
+        # Crea símbolos de SymPy para cada variable
         symbols = sp.symbols(variables)
         expressions = []
         for line in lines:
             try:
+                # Convierte string a expresión simbólica con funciones seguras
                 expr = sp.sympify(line, locals=self._safe_locals)
             except (sp.SympifyError, TypeError) as exc:
                 raise ValueError(f"No se pudo interpretar la expresión: '{line}'.") from exc
             expressions.append(expr)
+        # Deriva automáticamente la matriz Jacobiana
         jacobian = sp.Matrix(expressions).jacobian(symbols)
         return expressions, jacobian
 
@@ -95,10 +94,13 @@ class NewtonSystemSolver:
         tolerance: float,
         max_iterations: int,
     ) -> Tuple[List[IterationRecord], np.ndarray, bool]:
+        """Ejecuta iteraciones de Newton-Raphson hasta convergencia o máximo de iteraciones."""
+        # Valida y procesa entrada del usuario
         variables = self._parse_variables(variables_raw)
         initial_guess = self._parse_initial_guess(initial_guess_raw, len(variables))
         expressions, jacobian = self._parse_functions(functions_raw, variables)
 
+        # Convierte expresiones simbólicas en funciones NumPy evaluables
         symbols = sp.symbols(variables)
         f_lambda = sp.lambdify(symbols, expressions, modules="numpy")
         j_lambda = sp.lambdify(symbols, jacobian, modules="numpy")
@@ -106,11 +108,14 @@ class NewtonSystemSolver:
         current = initial_guess.astype(float)
         iterations: List[IterationRecord] = []
 
+        # Iteración principal del método de Newton-Raphson
         for idx in range(1, max_iterations + 1):
+            # Evalúa F(x) y J(x) en punto actual
             f_val = np.array(f_lambda(*current), dtype=float).reshape(-1)
             j_val = np.array(j_lambda(*current), dtype=float)
 
             try:
+                # Resuelve J(x)*Δx = -F(x) para obtener incremento
                 delta = np.linalg.solve(j_val, -f_val)
             except np.linalg.LinAlgError as exc:
                 raise ValueError(
@@ -118,10 +123,12 @@ class NewtonSystemSolver:
                     " Intente otra aproximación inicial."
                 ) from exc
 
+            # Actualiza aproximación: x_{k+1} = x_k + Δx
             next_guess = current + delta
             delta_norm = float(np.linalg.norm(delta, ord=np.inf))
             residual_norm = float(np.linalg.norm(f_val, ord=np.inf))
 
+            # Registra iteración
             iterations.append(
                 IterationRecord(
                     index=idx,
@@ -132,6 +139,7 @@ class NewtonSystemSolver:
             )
 
             current = next_guess
+            # Verifica convergencia
             if delta_norm < tolerance:
                 return iterations, current, True
 
@@ -139,31 +147,38 @@ class NewtonSystemSolver:
 
 
 class NewtonGUIApp:
+    """Aplicación gráfica para resolver sistemas no lineales con Newton-Raphson."""
+    
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("Newton-Raphson para sistemas no lineales")
-        self.solver = NewtonSystemSolver()
+        self.solver = NewtonSystemSolver()  # Instancia del solucionador
         self.result_var = tk.StringVar(value="Ingrese datos y presione 'Resolver'.")
-        self._build_ui()
+        self._build_ui()  # Construye interfaz gráfica
 
     def _build_ui(self) -> None:
+        """Construye la interfaz gráfica con campos de entrada y tabla de resultados."""
         self.root.geometry("900x600")
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=1)
 
+        # Panel de entrada de datos
         input_frame = ttk.LabelFrame(self.root, text="Datos de entrada")
         input_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
+        # Campo de variables
         ttk.Label(input_frame, text="Variables (separadas por coma):").grid(row=0, column=0, sticky="w")
         self.variables_entry = ttk.Entry(input_frame)
         self.variables_entry.insert(0, "x, y")
         self.variables_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
+        # Campo de ecuaciones
         ttk.Label(input_frame, text="Ecuaciones (una por línea):").grid(row=1, column=0, sticky="nw")
         self.functions_text = ScrolledText(input_frame, height=5, width=40)
         self.functions_text.insert("1.0", "x**2 + y**2 - 1\nx - y")
         self.functions_text.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
 
+        # Campos de parámetros numéricos
         ttk.Label(input_frame, text="Aproximación inicial (coma):").grid(row=2, column=0, sticky="w")
         self.initial_entry = ttk.Entry(input_frame)
         self.initial_entry.insert(0, "0.5, 0.5")
@@ -179,6 +194,7 @@ class NewtonGUIApp:
         self.iterations_entry.insert(0, "20")
         self.iterations_entry.grid(row=4, column=1, sticky="ew", padx=5, pady=5)
 
+        # Botones de acción
         button_frame = ttk.Frame(input_frame)
         button_frame.grid(row=5, column=0, columnspan=2, pady=5, sticky="ew")
         button_frame.grid_columnconfigure((0, 1), weight=1)
@@ -189,24 +205,28 @@ class NewtonGUIApp:
         clear_btn = ttk.Button(button_frame, text="Limpiar", command=self._clear_fields)
         clear_btn.grid(row=0, column=1, padx=5, sticky="ew")
 
-        # Tabla de iteraciones
+        # Panel con tabla de iteraciones
         table_frame = ttk.LabelFrame(self.root, text="Iteraciones")
         table_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
         table_frame.grid_rowconfigure(0, weight=1)
         table_frame.grid_columnconfigure(0, weight=1)
 
+        # Tabla para mostrar datos de cada iteración
         self.tree = ttk.Treeview(table_frame, columns=(), show="headings", height=10)
         self.tree.grid(row=0, column=0, sticky="nsew")
 
+        # Barra de desplazamiento para tabla
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.tree.configure(yscrollcommand=scrollbar.set)
 
+        # Etiqueta con resultado final
         ttk.Label(self.root, textvariable=self.result_var, font=("Helvetica", 11, "bold"), wraplength=850).grid(
             row=2, column=0, padx=10, pady=10, sticky="w"
         )
 
     def _configure_tree(self, variables: Sequence[str]) -> None:
+        """Configura columnas de tabla según número de variables."""
         columns = ["Iteración", *variables, "||Δx||∞", "||F(x)||∞"]
         self.tree.configure(columns=columns)
         for col in columns:
@@ -216,10 +236,12 @@ class NewtonGUIApp:
             self.tree.column(col, anchor=anchor, width=width, stretch=True)
 
     def _clear_table(self) -> None:
+        """Elimina todas las filas de la tabla."""
         for row in self.tree.get_children():
             self.tree.delete(row)
 
     def _clear_fields(self) -> None:
+        """Restaura campos a valores por defecto."""
         self.variables_entry.delete(0, tk.END)
         self.variables_entry.insert(0, "x, y")
         self.functions_text.delete("1.0", tk.END)
@@ -234,10 +256,13 @@ class NewtonGUIApp:
         self.result_var.set("Campos restablecidos. Ingrese nuevos valores.")
 
     def _on_solve(self) -> None:
+        """Maneja evento de botón Resolver: obtiene entrada, ejecuta solver y muestra resultados."""
+        # Obtiene entrada del usuario
         functions_raw = self.functions_text.get("1.0", tk.END)
         variables_raw = self.variables_entry.get()
         initial_raw = self.initial_entry.get()
 
+        # Valida parámetros numéricos
         try:
             tolerance = float(self.tolerance_entry.get())
             max_iter = int(self.iterations_entry.get())
@@ -247,6 +272,7 @@ class NewtonGUIApp:
             messagebox.showerror("Error", "La tolerancia debe ser positiva y las iteraciones un entero positivo.")
             return
 
+        # Ejecuta el solucionador
         try:
             iterations, final_vector, converged = self.solver.solve(
                 functions_raw=functions_raw,
@@ -259,10 +285,12 @@ class NewtonGUIApp:
             messagebox.showerror("Error", str(exc))
             return
 
+        # Muestra resultados en tabla
         variables = [token.strip() for token in variables_raw.split(",") if token.strip()]
         self._configure_tree(variables)
         self._clear_table()
 
+        # Rellena tabla con iteraciones
         for record in iterations:
             row = [record.index]
             row.extend(f"{val:.8f}" for val in record.values)
@@ -270,6 +298,7 @@ class NewtonGUIApp:
             row.append(f"{record.residual_norm:.3e}")
             self.tree.insert("", tk.END, values=row)
 
+        # Muestra resumen de solución
         formatted_solution = ", ".join(f"{var}={val:.8f}" for var, val in zip(variables, final_vector))
         if converged:
             self.result_var.set(
@@ -282,10 +311,12 @@ class NewtonGUIApp:
 
     @staticmethod
     def run() -> None:
+        """Inicia la aplicación gráfica."""
         root = tk.Tk()
         app = NewtonGUIApp(root)
         root.mainloop()
 
 
 if __name__ == "__main__":
+    # Punto de entrada principal
     NewtonGUIApp.run()

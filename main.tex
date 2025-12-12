@@ -1,0 +1,200 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{\textbf{Newton-Raphson Multivariable: Solución Interactiva de Sistemas No Lineales}}
+\author{Juan Diego Grajales Castillo - 20221020128 \\ estudiantes \\ estudiantes \\ estudiante \\ Universidad Distrital Francisco José de Caldas \\ Asignatura: Métodos Numéricos (2025-3)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Resumen}
+Este documento presenta una implementación interactiva del método de Newton-Raphson para resolver sistemas de ecuaciones no lineales. Se desarrolló una aplicación de escritorio en Python con interfaz gráfica (Tkinter) que permite ingresar ecuaciones, aproximaciones iniciales y parámetros de convergencia, mostrando paso a paso cada iteración del método. Se incluye la teoría subyacente, ejemplos detallados y el código fuente completo. El proyecto demuestra la utilidad del método numérico en la resolución de problemas multivariables complejos.
+
+\section{Introducción}
+Los sistemas de ecuaciones no lineales son frecuentes en ingeniería, física y ciencias computacionales. Su solución analítica a menudo es imposible, por lo que se recurre a métodos numéricos iterativos. Entre ellos, el \textbf{método de Newton-Raphson multivariable} destaca por su rapidez de convergencia cuadrática cerca de la raíz. Sin embargo, su implementación práctica requiere el cálculo del Jacobiano y una cuidadosa selección del punto inicial.
+
+El propósito de este proyecto es \textbf{diseñar e implementar una herramienta interactiva} que aplique el método de Newton-Raphson a sistemas de cualquier tamaño, mostrando el proceso iterativo de forma clara y didáctica. La herramienta también servirá como material educativo para estudiantes de métodos numéricos.
+
+\section{Desarrollo Teórico}
+\subsection{Método de Newton-Raphson para Sistemas No Lineales}
+Dado un sistema de $n$ ecuaciones con $n$ incógnitas:
+
+\[
+\mathbf{F}(\mathbf{x}) = 
+\begin{cases}
+f_1(x_1, x_2, \dots, x_n) = 0 \\
+f_2(x_1, x_2, \dots, x_n) = 0 \\
+\vdots \\
+f_n(x_1, x_2, \dots, x_n) = 0
+\end{cases}
+\]
+
+donde $\mathbf{x} = [x_1, x_2, \dots, x_n]^T$, el método de Newton-Raphson genera una sucesión de aproximaciones $\mathbf{x}^{(k)}$ mediante la fórmula iterativa:
+
+\[
+\mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} - \mathbf{J}^{-1}(\mathbf{x}^{(k)}) \cdot \mathbf{F}(\mathbf{x}^{(k)})
+\]
+
+donde $\mathbf{J}(\mathbf{x})$ es la matriz Jacobiana del sistema:
+
+\[
+\mathbf{J}(\mathbf{x}) = 
+\begin{bmatrix}
+\frac{\partial f_1}{\partial x_1} & \frac{\partial f_1}{\partial x_2} & \dots & \frac{\partial f_1}{\partial x_n} \\
+\frac{\partial f_2}{\partial x_1} & \frac{\partial f_2}{\partial x_2} & \dots & \frac{\partial f_2}{\partial x_n} \\
+\vdots & \vdots & \ddots & \vdots \\
+\frac{\partial f_n}{\partial x_1} & \frac{\partial f_n}{\partial x_2} & \dots & \frac{\partial f_n}{\partial x_n}
+\end{bmatrix}
+\]
+
+En la práctica, se resuelve el sistema lineal:
+
+\[
+\mathbf{J}(\mathbf{x}^{(k)}) \cdot \Delta\mathbf{x}^{(k)} = -\mathbf{F}(\mathbf{x}^{(k)})
+\]
+
+y luego se actualiza:
+
+\[
+\mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} + \Delta\mathbf{x}^{(k)}
+\]
+
+El criterio de parada se basa en la norma infinito del incremento:
+
+\[
+\|\Delta\mathbf{x}^{(k)}\|_\infty < \varepsilon
+\]
+
+o en el número máximo de iteraciones permitidas.
+
+\subsection{Consideraciones de Implementación}
+\begin{itemize}
+    \item \textbf{Cálculo simbólico del Jacobiano}: Se utiliza la librería \texttt{sympy} para derivar automáticamente.
+    \item \textbf{Selección del punto inicial}: Crítica para la convergencia.
+    \item \textbf{Manejo de singularidades}: Si $\mathbf{J}$ es singular, el método falla.
+    \item \textbf{Funciones matemáticas soportadas}: $\sin$, $\cos$, $\exp$, $\log$, $\sqrt$, $\pi$, e, etc.
+\end{itemize}
+
+\section{Ejemplos y Problemas Resueltos}
+\subsection{Ejemplo 1: Sistema 2×2}
+Resolver:
+\[
+\begin{cases}
+x^2 + y^2 - 1 = 0 \\
+x - y = 0
+\end{cases}
+\]
+
+\textbf{Solución analítica}: $x = y = \pm \sqrt{2}/2$.
+
+\textbf{Solución numérica}: Con punto inicial $(0.5, 0.5)$ y tolerancia $10^{-6}$, el método converge en 4 iteraciones a $(0.70710678, 0.70710678)$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc}
+\toprule
+Iter & $x$ & $y$ & $\|\Delta\mathbf{x}\|_\infty$ & $\|\mathbf{F}(\mathbf{x})\|_\infty$ \\
+\midrule
+1 & 0.62500000 & 0.62500000 & 1.250e-01 & 3.125e-01 \\
+2 & 0.70312500 & 0.70312500 & 7.812e-02 & 7.812e-02 \\
+3 & 0.70709229 & 0.70709229 & 3.967e-04 & 3.967e-04 \\
+4 & 0.70710678 & 0.70710678 & 1.449e-05 & 1.449e-05 \\
+\bottomrule
+\end{tabular}
+\caption{Iteraciones para el Ejemplo 1.}
+\end{table}
+
+\subsection{Ejemplo 2: Sistema 3×3}
+Resolver:
+\[
+\begin{cases}
+x^2 + y^2 + z^2 - 1 \\
+x + y + z - 1 \\
+x^2 + y - z
+\end{cases}
+\]
+
+\textbf Con punto inicial $(−0.165956,0.440649,−0.999771)$ y tolerancia $10^{-10}$, converge en 13 iteraciones a $(0.851883856,−0.28879499,0.43691113)$.
+
+\section{Implementación del Algoritmo}
+Se desarrolló una aplicación en Python con interfaz gráfica Tkinter. El código principal se estructura en dos clases:
+\begin{itemize}
+    \item \texttt{NewtonSystemSolver}: Lógica del método numérico.
+    \item \texttt{NewtonGUIApp}: Interfaz gráfica y control de eventos.
+\end{itemize}
+
+\subsection{Código Principal (Fragmento)}
+\begin{lstlisting}[language=Python, basicstyle=\small, keywordstyle=\color{blue}]
+def solve(self, functions_raw, variables_raw, initial_guess_raw, tolerance, max_iterations):
+    variables = self._parse_variables(variables_raw)
+    initial_guess = self._parse_initial_guess(initial_guess_raw, len(variables))
+    expressions, jacobian = self._parse_functions(functions_raw, variables)
+    
+    symbols = sp.symbols(variables)
+    f_lambda = sp.lambdify(symbols, expressions, modules="numpy")
+    j_lambda = sp.lambdify(symbols, jacobian, modules="numpy")
+    
+    current = initial_guess.astype(float)
+    iterations = []
+    
+    for idx in range(1, max_iterations + 1):
+        f_val = np.array(f_lambda(*current), dtype=float).reshape(-1)
+        j_val = np.array(j_lambda(*current), dtype=float)
+        
+        delta = np.linalg.solve(j_val, -f_val)
+        next_guess = current + delta
+        
+        delta_norm = float(np.linalg.norm(delta, ord=np.inf))
+        residual_norm = float(np.linalg.norm(f_val, ord=np.inf))
+        
+        iterations.append(IterationRecord(idx, next_guess.tolist(), delta_norm, residual_norm))
+        current = next_guess
+        
+        if delta_norm < tolerance:
+            return iterations, current, True
+    
+    return iterations, current, False
+\end{lstlisting}
+
+\subsection{Características de la Implementación}
+\begin{itemize}
+    \item \textbf{Interfaz intuitiva}: Campos para variables, ecuaciones, punto inicial, tolerancia e iteraciones.
+    \item \textbf{Tabla interactiva}: Muestra cada iteración con valores, normas de incremento y residuo.
+    \item \textbf{Manejo de errores}: Validación de entrada, detección de singularidades.
+    \item \textbf{Flexibilidad}: Soporta cualquier número de ecuaciones/variables.
+\end{itemize}
+
+\section{Conclusiones}
+El método de Newton-Raphson multivariable es una herramienta poderosa para resolver sistemas no lineales, con convergencia rápida cuando se elige un buen punto inicial. La implementación presentada automatiza el cálculo del Jacobiano y proporciona una interfaz visual que facilita el análisis del proceso iterativo.
+
+Esta herramienta no solo resuelve problemas numéricos, sino que también sirve como recurso educativo, permitiendo a los estudiantes observar cómo cambian las aproximaciones en cada paso. Futuras mejoras podrían incluir:
+\begin{itemize}
+    \item Métodos híbridos (ej. Newton con backtracking).
+    \item Visualización gráfica de las trayectorias iterativas en 2D.
+    \item Exportación de resultados a formatos como CSV o LaTeX.
+\end{itemize}
+
+\section*{Bibliografía}
+Chapra, S. C., \& Canale, R. P. (2015). \textit{Métodos numéricos para ingenieros} (7ª ed.). McGraw-Hill.
+
+Mathews, J. H., \& Fink, K. D. (2004). \textit{Numerical methods using MATLAB} (4ª ed.). Pearson.
+
+Press, W. H., Teukolsky, S. A., Vetterling, W. T., \& Flannery, B. P. (2007). \textit{Numerical recipes: The art of scientific computing} (3ª ed.). Cambridge University Press.
+
+SymPy Development Team. (2023). \textit{SymPy: Python library for symbolic mathematics}. Recuperado de \url{https://www.sympy.org/}
+
+\end{document}
