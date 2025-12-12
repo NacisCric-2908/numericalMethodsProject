@@ -11,10 +11,13 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{geometry}
+\usepackage{mathtools}
+\usepackage{array}
+\usepackage{float}
 \geometry{margin=1in}
 
 \title{\textbf{Newton-Raphson Multivariable: Solución Interactiva de Sistemas No Lineales}}
-\author{Juan Diego Grajales Castillo - 20221020128 \\ estudiantes \\ estudiantes \\ estudiante \\ Universidad Distrital Francisco José de Caldas \\ Asignatura: Métodos Numéricos (2025-3)}
+\author{Juan Diego Grajales Castillo - 20221020128 \\ Julian David Celis Giraldo - 20222020041 \\ estudiantes \\ estudiante \\ Universidad Distrital Francisco José de Caldas \\ Asignatura: Métodos Numéricos (2025-3)}
 \date{\today}
 
 \begin{document}
@@ -129,6 +132,338 @@ x^2 + y - z
 \]
 
 \textbf Con punto inicial $(−0.165956,0.440649,−0.999771)$ y tolerancia $10^{-10}$, converge en 13 iteraciones a $(0.851883856,−0.28879499,0.43691113)$.
+
+\subsection{Ejemplo 3: Sistema 2x2}
+Resolver mediante Newton--Raphson el sistema:
+\[
+\begin{cases}
+f_1(x,y)=x^2 + y^2 - 10 = 0, \\[6pt]
+f_2(x,y)=x^2 - y - 1 = 0.
+\end{cases}
+\]
+
+\section*{1. Definición del vector de funciones}
+\[
+\mathbf{f}(x,y)=
+\begin{pmatrix}
+x^2 + y^2 - 10 \\[6pt]
+x^2 - y - 1
+\end{pmatrix}.
+\]
+
+\section*{2. Jacobiano}
+\[
+J(x,y)=
+\begin{pmatrix}
+\frac{\partial f_1}{\partial x} & \frac{\partial f_1}{\partial y}\\[6pt]
+\frac{\partial f_2}{\partial x} & \frac{\partial f_2}{\partial y}
+\end{pmatrix}
+=
+\begin{pmatrix}
+2x & 2y \\[6pt]
+2x & -1
+\end{pmatrix}.
+\]
+
+\section*{3. Fórmula de Newton}
+\[
+\mathbf{u}_{k+1}=
+\mathbf{u}_k
+-
+J(x_k,y_k)^{-1}\,
+\mathbf{f}(x_k,y_k).
+\]
+
+\section*{4. Iteración inicial}
+Tomamos como aproximación inicial:
+\[
+\mathbf{u}_0=(x_0,y_0)=(2,2).
+\]
+
+\[
+\mathbf{f}(2,2)=
+\begin{pmatrix}
+2^2 + 2^2 - 10\\[6pt]
+2^2 - 2 - 1
+\end{pmatrix}
+=
+\begin{pmatrix}
+-2\\[6pt]
+1
+\end{pmatrix}.
+\]
+
+Jacobiano en $(2,2)$:
+\[
+J(2,2)=
+\begin{pmatrix}
+4 & 4\\[6pt]
+4 & -1
+\end{pmatrix}.
+\]
+
+\section*{5. Inversa del Jacobiano}
+\[
+\det(J)=4(-1)-4\cdot 4=-4-16=-20.
+\]
+
+\[
+J^{-1}=\frac{1}{-20}
+\begin{pmatrix}
+-1 & -4 \\[6pt]
+-4 & 4
+\end{pmatrix}.
+\]
+
+\section*{6. Cálculo de la corrección}
+\[
+J^{-1}\mathbf{f}(2,2)
+=\frac{1}{-20}
+\begin{pmatrix}
+-1 & -4 \\[6pt]
+-4 & 4
+\end{pmatrix}
+\begin{pmatrix}
+-2\\[6pt]
+1
+\end{pmatrix}.
+\]
+
+Multiplicando:
+\[
+\begin{pmatrix}
+(-1)(-2) + (-4)(1) \\[6pt]
+(-4)(-2) + 4(1)
+\end{pmatrix}
+=
+\begin{pmatrix}
+2 - 4 \\[6pt]
+8 + 4
+\end{pmatrix}
+=
+\begin{pmatrix}
+-2 \\[6pt]
+12
+\end{pmatrix}.
+\]
+
+\[
+J^{-1}\mathbf{f}(2,2)
+=
+\frac{1}{-20}
+\begin{pmatrix}
+-2\\[6pt]
+12
+\end{pmatrix}
+=
+\begin{pmatrix}
+0.1\\[6pt]
+-0.6
+\end{pmatrix}.
+\]
+
+\section*{7. Actualización}
+\[
+\mathbf{u}_1
+=\mathbf{u}_0 - 
+J^{-1}\mathbf{f}(\mathbf{u}_0)
+=
+\begin{pmatrix}
+2\\[6pt]
+2
+\end{pmatrix}
+-
+\begin{pmatrix}
+0.1\\[6pt]
+-0.6
+\end{pmatrix}
+=
+\begin{pmatrix}
+1.9\\[6pt]
+2.6
+\end{pmatrix}.
+\]
+
+\section*{8. Aproximación después de una iteración}
+\[
+\boxed{(x_1,y_1)\approx(1.9,\; 2.6)}
+\]
+\subsection*{Segunda iteración (desde \(\mathbf{u}_1=(1.9,\,2.6)\))}
+
+Evaluamos \(\mathbf{f}\) en \((1.9,2.6)\):
+\[
+\mathbf{f}(1.9,2.6)=
+\begin{pmatrix}
+1.9^2 + 2.6^2 - 10 \\[6pt]
+1.9^2 - 2.6 - 1
+\end{pmatrix}
+=
+\begin{pmatrix}
+0.37 \\[6pt]
+0.01
+\end{pmatrix}.
+\]
+
+Jacobian en \((1.9,2.6)\):
+\[
+J(1.9,2.6)=
+\begin{pmatrix}
+2(1.9) & 2(2.6) \\[6pt]
+2(1.9) & -1
+\end{pmatrix}
+=
+\begin{pmatrix}
+3.8 & 5.2 \\[6pt]
+3.8 & -1
+\end{pmatrix}.
+\]
+
+Determinante:
+\[
+\det J = 3.8(-1) - 5.2(3.8) = -23.56.
+\]
+
+Inversa (usando la adjunta / determinante):
+\[
+J(1.9,2.6)^{-1}=\frac{1}{-23.56}
+\begin{pmatrix}
+-1 & -5.2 \\[6pt]
+-3.8 & 3.8
+\end{pmatrix}
+=
+\begin{pmatrix}
+0.0424448217317487 & 0.2207130730050934 \\[6pt]
+0.1612903225806452 & -0.1612903225806452
+\end{pmatrix}.
+\]
+
+Corrección \(\delta = J^{-1}\mathbf{f}(1.9,2.6)\):
+\[
+\delta =
+\begin{pmatrix}
+\delta_x \\[6pt] \delta_y
+\end{pmatrix}
+=
+\begin{pmatrix}
+0.0424448217317487 & 0.2207130730050934 \\[6pt]
+0.1612903225806452 & -0.1612903225806452
+\end{pmatrix}
+\begin{pmatrix}
+0.37 \\[6pt] 0.01
+\end{pmatrix}
+=
+\begin{pmatrix}
+0.01791171477079796 \\[6pt]
+0.05806451612903226
+\end{pmatrix}.
+\]
+
+Actualización:
+\[
+\mathbf{u}_2 = \mathbf{u}_1 - \delta
+=
+\begin{pmatrix}
+1.9 \\[6pt] 2.6
+\end{pmatrix}
+-
+\begin{pmatrix}
+0.01791171477079796 \\[6pt]
+0.05806451612903226
+\end{pmatrix}
+=
+\begin{pmatrix}
+1.8820882852292020 \\[6pt]
+2.5419354838709677
+\end{pmatrix}.
+\]
+
+Por tanto, tras la segunda iteración se obtiene la aproximación
+\[
+\boxed{\mathbf{u}_2 \approx (x_2,y_2) \approx (1.8820882852292020,\;2.5419354838709677).}
+\]
+
+
+% Sección: salto a casi la última iteración
+\subsection*{Salto a casi la \textit{última} iteración}
+
+A continuación saltamos directamente a una iteración muy avanzada del proceso (casi convergida). Tomando como punto de partida la iteración previa se obtiene la siguiente aproximación y corrección extremadamente pequeña.
+
+\[
+\mathbf{u}_4 \approx
+\begin{pmatrix}
+x_4 \\[4pt] y_4
+\end{pmatrix}
+=
+\begin{pmatrix}
+1.88185580349534513286325939158 \\[4pt]
+2.54138126514911026354797637379
+\end{pmatrix}.
+\]
+
+Evaluamos el vector residual \(\mathbf{f}(x_4,y_4)\):
+\[
+\mathbf{f}(x_4,y_4)=
+\begin{pmatrix}
+x_4^2 + y_4^2 - 10 \\[6pt]
+x_4^2 - y_4 - 1
+\end{pmatrix}
+\approx
+\begin{pmatrix}
+3.3202007412244499\times 10^{-15} \\[6pt]
+7.7123045180993946\times 10^{-16}
+\end{pmatrix}.
+\]
+
+Jacobiano en \((x_4,y_4)\):
+\[
+J(x_4,y_4)=
+\begin{pmatrix}
+2x_4 & 2y_4 \\[6pt]
+2x_4 & -1
+\end{pmatrix}
+\approx
+\begin{pmatrix}
+3.7637116069906903 & 5.0827625302982205 \\[6pt]
+3.7637116069906903 & -1
+\end{pmatrix}.
+\]
+
+La corrección \(\delta = J(x_4,y_4)^{-1}\mathbf{f}(x_4,y_4)\) resulta en valores del orden de \(10^{-16}\):
+\[
+\delta \approx
+\begin{pmatrix}
+\delta_x \\[4pt] \delta_y
+\end{pmatrix}
+\approx
+\begin{pmatrix}
+3.1625127277294937\times 10^{-16} \\[6pt]
+4.1904813425118894\times 10^{-16}
+\end{pmatrix}.
+\]
+
+Por tanto la actualización de Newton da
+\[
+\mathbf{u}_5 = \mathbf{u}_4 - \delta
+\approx
+\begin{pmatrix}
+1.88185580349534481661198661863 \\[6pt]
+2.54138126514910984449984212261
+\end{pmatrix}.
+\]
+
+Vemos que la corrección es prácticamente nula (órdenes \(10^{-16}\)), por lo que la solución ha convergido numéricamente y podemos tomar como solución aproximada final:
+
+\[
+\boxed{\;(x,y)\approx(1.8818558034953448,\;2.5413812651491098)\;}.
+\]
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imagenes/Grafica.png}
+    \caption{Gráfica del sistema no lineal}
+\end{figure}
+
+% Espacio para que adicionen más ejercicios
 
 \section{Implementación del Algoritmo}
 Se desarrolló una aplicación en Python con interfaz gráfica Tkinter. El código principal se estructura en dos clases:
